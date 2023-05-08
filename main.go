@@ -12,7 +12,7 @@ var apiKey string
 func main() {
 	fmt.Println("done")
 
-	apiKey = os.Getenv("ApiKey")
+	apiKey = os.Getenv("APIKEY")
 
 	if apiKey == "" {
 		// try from env file
