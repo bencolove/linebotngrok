@@ -1,20 +1,31 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func startServer() *gin.Engine {
+func startServer() (*gin.Engine, error) {
 	server := gin.Default()
-	server.GET("/tunnels", tunnelHandle)
-	return server
+	// api
+	apiRoute := server.Group("/api")
+	apiRoute.GET("/tunnels", tunnelHandle)
+	// line callback
+	lineRoute := server.Group("/line")
+	{
+		handler, err := BuildLinebotHandler()
+		if err != nil {
+			return nil, err
+		}
+		lineRoute.POST("/callback", WrapHttpHandlerToGin(handler))
+	}
+
+	return server, nil
 }
 
 func tunnelHandle(c *gin.Context) {
-	if urls, err := getTunnels(apiKey); err != nil {
+	if urls, err := ListTunnels(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false})
 	} else {
@@ -25,20 +36,15 @@ func tunnelHandle(c *gin.Context) {
 	}
 }
 
-func getTunnels(apiKey string) ([]string, error) {
-	tunnelResp, err := fetchTunnels(apiKey)
-	if err != nil {
-		return nil, err
-	} else {
-		fmt.Printf("tunnels: %+v\n", tunnelResp)
-		urls := []string{}
-		if len(tunnelResp.Tunnels) > 0 {
-			url := tunnelResp.Tunnels[0].PublicURL
-			if url != "" {
-				urls = append(urls, url)
-			}
-		}
-		return urls, nil
+// convert http.HandlerFunc to gin's
+func WrapHttpHandlerToGin(f http.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		f(c.Writer, c.Request)
 	}
+}
 
+func WrapHttpHandlerToGinBuilder(f http.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		f(c.Writer, c.Request)
+	}
 }

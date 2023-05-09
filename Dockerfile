@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o ./linebotngrok
+RUN CGO_ENABLED=0 GOOS=linux go build -o /linebotngrok
 
 EXPOSE 8080
 
-CMD ["./linebotngrok"]
+CMD ["/linebotngrok"]
