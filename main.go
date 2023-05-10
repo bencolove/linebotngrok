@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"com.roger.ngrok.linebot/config"
 )
 
 func main() {
 	fmt.Println("done")
 
-	if apiKey, err := GetEnvString("ApiKey"); apiKey == "" || err != nil {
+	if apiKey, err := config.GetEnvString("ApiKey"); apiKey == "" || err != nil {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "ApiKey not set")
 		}

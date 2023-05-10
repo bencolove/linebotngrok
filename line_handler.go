@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"com.roger.ngrok.linebot/config"
+	"com.roger.ngrok.linebot/ngrokapi"
+
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 )
 
@@ -18,8 +21,8 @@ var err error
 
 func init() {
 
-	channelSecret, err = GetEnvString("CHANNEL_SECRET")
-	channelAccessToken, err = GetEnvString("CHANNEL_TOKEN")
+	channelSecret, err = config.GetEnvString("CHANNEL_SECRET")
+	channelAccessToken, err = config.GetEnvString("CHANNEL_TOKEN")
 
 	httpClient := &http.Client{}
 	bot, err = linebot.New(channelSecret, channelAccessToken,
@@ -95,7 +98,7 @@ func handleNgrokRequest(message *linebot.TextMessage, replyToken string, source 
 		msg = err.Error()
 	} else {
 		urlResText := []string{}
-		for data := range GetNgrokTunnels() {
+		for data := range ngrokapi.GetNgrokTunnelsAsync() {
 			content := ""
 			if data.Err != nil {
 				content = data.Err.Error()
@@ -115,7 +118,7 @@ func handleNgrokRequest(message *linebot.TextMessage, replyToken string, source 
 
 }
 
-func formatNgrokTunnels(t *NgrokTunnel) string {
+func formatNgrokTunnels(t *ngrokapi.NgrokTunnel) string {
 	if t != nil {
 		b := strings.Builder{}
 		if t.Protocal == "tcp" {

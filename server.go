@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"com.roger.ngrok.linebot/ngrokapi"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,14 +20,21 @@ func startServer() (*gin.Engine, error) {
 		if err != nil {
 			return nil, err
 		}
-		lineRoute.POST("/callback", WrapHttpHandlerToGin(handler))
+		lineRoute.POST("/callback", WrapHttpHandlerFuncToGinBuilder(handler))
+	}
+	// graphql
+	graphqlRoute := server.Group("/g")
+	{
+		graphqlRoute.GET("/users", WrapHttpHandlerFuncToGinBuilder(ngrokapi.GetNgrokUsers))
+		graphqlRoute.POST("/", WrapHttpHandlerToGin(ngrokapi.GetGraphqlHttpHandler()))
+		graphqlRoute.GET("/tunnels", WrapHttpHandlerFuncToGinBuilder(ngrokapi.GetNgrokTunnels))
 	}
 
 	return server, nil
 }
 
 func tunnelHandle(c *gin.Context) {
-	if urls, err := ListTunnels(); err != nil {
+	if urls, err := ngrokapi.ListTunnels(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false})
 	} else {
@@ -37,13 +46,13 @@ func tunnelHandle(c *gin.Context) {
 }
 
 // convert http.HandlerFunc to gin's
-func WrapHttpHandlerToGin(f http.HandlerFunc) gin.HandlerFunc {
+func WrapHttpHandlerToGin(h http.Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		f(c.Writer, c.Request)
+		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
-func WrapHttpHandlerToGinBuilder(f http.HandlerFunc) gin.HandlerFunc {
+func WrapHttpHandlerFuncToGinBuilder(f http.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		f(c.Writer, c.Request)
 	}

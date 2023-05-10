@@ -1,4 +1,4 @@
-package main
+package ngrokapi
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	config "com.roger.ngrok.linebot/config"
 )
 
 const (
@@ -62,7 +64,7 @@ func fetchTunnels(apiKey string) (TunnelResp, error) {
 }
 
 func ListTunnels() ([]string, error) {
-	apiKey, err := GetEnvString("ApiKey")
+	apiKey, err := config.GetEnvString("ApiKey")
 	if err != nil {
 		return nil, err
 	}
@@ -100,20 +102,20 @@ type NgrokTunnel struct {
 	LocalPort  int
 }
 
-type ChanRetType interface {
-	NgrokTunnel | *NgrokTunnel
-}
+// type ChanRetType interface {
+// 	NgrokTunnel | *NgrokTunnel | any
+// }
 
-type ChanRet[T ChanRetType] struct {
+type ChanRet[T any] struct {
 	Val T
 	Err error
 }
 
-func GetNgrokTunnels[T *NgrokTunnel]() <-chan ChanRet[T] {
+func GetNgrokTunnelsAsync[T *NgrokTunnel]() <-chan ChanRet[T] {
 
 	outChan := make(chan ChanRet[T])
 
-	apiKey, err := GetEnvString("ApiKey")
+	apiKey, err := config.GetEnvString("ApiKey")
 	if err != nil {
 		outChan <- ChanRet[T]{Err: err}
 	}
