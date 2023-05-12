@@ -1,15 +1,16 @@
-FROM golang:1.20.3
+FROM golang:1.20.3 as BUILDER
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY . ./
 
 RUN go mod download
 
-COPY *.go config/ ngrokapi/ ./
-
 RUN CGO_ENABLED=0 GOOS=linux go build -o /linebotngrok
+
+FROM golang:1.20.3
+COPY --from=BUILDER /linebotngrok /linbot
 
 EXPOSE 8080
 
-CMD ["/linebotngrok"]
+CMD ["/linebot"]
